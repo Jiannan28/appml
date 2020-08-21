@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<style>
+.node {
+	cursor: pointer;
+}
+
+.node circle {
+	stroke-width: 3px;
+}
+
+.node text {
+	font: 12px helvetica;
+}
+
+.link {
+	fill: none;
+	stroke: #ccc;
+	stroke-width: 2px;
+}
+
+</style>
+</head>
+
+<body>
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var margin = {top: 50, right: 100, bottom: 150, left: 50};
+
+// collect all inputs
+var tree_depth = 7;
+var rules = {"0": [], "1": ["average_speed <= 6.192"], "2": ["average_speed > 6.192"], "3": ["tripduration <= 840", "average_speed <= 6.192"], "4": ["tripduration > 840", "average_speed <= 6.192"], "5": ["tripduration <= 1018", "average_speed > 6.192"], "6": ["tripduration > 1018", "average_speed > 6.192"], "7": ["tripduration > 1018", "6.192 < average_speed <= 9.263"], "8": ["tripduration > 1018", "average_speed > 9.263"], "9": ["tripduration > 1018", "is_weekend_False: 0", "6.192 < average_speed <= 9.263"], "10": ["tripduration > 1018", "is_weekend_False: 1", "6.192 < average_speed <= 9.263"], "11": ["tripduration > 840", "average_speed <= 6.192", "start station latitude <= 40.76"], "12": ["tripduration > 840", "average_speed <= 6.192", "start station latitude > 40.76"], "13": ["tripduration <= 1018", "average_speed > 6.192", "is_circle_trip_False: 0"], "14": ["tripduration <= 1018", "average_speed > 6.192", "is_circle_trip_False: 1"], "15": ["tripduration > 840", "is_weekend_False: 0", "average_speed <= 6.192", "start station latitude <= 40.76"], "16": ["tripduration > 840", "is_weekend_False: 1", "average_speed <= 6.192", "start station latitude <= 40.76"], "17": ["tripduration <= 1018", "is_circle_trip_False: 1", "6.192 < average_speed <= 8.292"], "18": ["tripduration <= 1018", "average_speed > 8.292", "is_circle_trip_False: 1"], "19": ["tripduration > 1018", "is_weekend_False: 0", "average_speed > 9.263"], "20": ["tripduration > 1018", "is_weekend_False: 1", "average_speed > 9.263"], "21": ["tripduration > 840", "is_weekend_False: 1", "average_speed <= 6.192", "end station latitude <= 40.713", "start station latitude <= 40.76"], "22": ["tripduration > 840", "is_weekend_False: 1", "average_speed <= 6.192", "end station latitude > 40.713", "start station latitude <= 40.76"], "23": ["tripduration > 840", "is_weekend_False: 1", "average_speed <= 6.192", "end station latitude <= 40.695", "start station latitude <= 40.76"], "24": ["tripduration > 840", "is_weekend_False: 1", "average_speed <= 6.192", "start station latitude <= 40.76", "40.695 < end station latitude <= 40.713"], "25": ["tripduration <= 565", "average_speed <= 6.192"], "26": ["average_speed <= 6.192", "565 < tripduration <= 840"], "27": ["tripduration <= 614", "is_circle_trip_False: 1", "6.192 < average_speed <= 8.292"], "28": ["is_circle_trip_False: 1", "614 < tripduration <= 1018", "6.192 < average_speed <= 8.292"], "29": ["is_weekend_False: 0", "is_circle_trip_False: 1", "614 < tripduration <= 1018", "6.192 < average_speed <= 8.292"], "30": ["is_weekend_False: 1", "is_circle_trip_False: 1", "614 < tripduration <= 1018", "6.192 < average_speed <= 8.292"], "31": ["tripduration > 1018", "is_weekend_False: 1", "traveled_distance <= 1.868", "6.192 < average_speed <= 9.263"], "32": ["tripduration > 1018", "is_weekend_False: 1", "traveled_distance > 1.868", "6.192 < average_speed <= 9.263"], "33": ["tripduration > 1018", "is_weekend_False: 1", "traveled_distance > 1.868", "6.192 < average_speed <= 7.538"], "34": ["tripduration > 1018", "is_weekend_False: 1", "traveled_distance > 1.868", "7.538 < average_speed <= 9.263"], "35": ["is_weekend_False: 0", "average_speed <= 6.192", "565 < tripduration <= 840"], "36": ["is_weekend_False: 1", "average_speed <= 6.192", "565 < tripduration <= 840"], "37": ["tripduration > 840", "average_speed <= 6.192", "start_moment_evening: 0", "start station latitude > 40.76"], "38": ["tripduration > 840", "average_speed <= 6.192", "start_moment_evening: 1", "start station latitude > 40.76"], "39": ["tripduration <= 565", "average_speed <= 4.577"], "40": ["tripduration <= 565", "4.577 < average_speed <= 6.192"], "41": ["tripduration > 840", "average_speed <= 6.192", "start_moment_evening: 0", "start station latitude > 40.76", "end station longitude <= -73.955"], "42": ["tripduration > 840", "average_speed <= 6.192", "start_moment_evening: 0", "start station latitude > 40.76", "end station longitude > -73.955"], "43": ["tripduration > 840", "average_speed <= 6.192", "start_moment_evening: 0", "start station latitude > 40.76", "end station longitude <= -73.977"], "44": ["tripduration > 840", "average_speed <= 6.192", "start_moment_evening: 0", "start station latitude > 40.76", "-73.977 < end station longitude <= -73.955"], "45": ["tripduration > 840", "average_speed <= 6.192", "start_moment_evening: 0", "end station latitude <= 40.765", "start station latitude > 40.76", "-73.977 < end station longitude <= -73.955"], "46": ["tripduration > 840", "average_speed <= 6.192", "start_moment_evening: 0", "end station latitude > 40.765", "start station latitude > 40.76", "-73.977 < end station longitude <= -73.955"], "47": ["is_weekend_False: 1", "average_speed <= 6.192", "840 < tripduration <= 1146", "end station latitude > 40.713", "start station latitude <= 40.76"], "48": ["tripduration > 1146", "is_weekend_False: 1", "average_speed <= 6.192", "end station latitude > 40.713", "start station latitude <= 40.76"]};
+var num_node = 49;
+var root = {"name": "Citibike_Tree", "parent": "null", "predict": "Subscriber", "self": 0, "pos": "null", "value": [58148, 423796], "sample": 481944, "color": "#ff7f0e", "children": [{"name": "average_speed <= 6.192", "parent": 0, "predict": "Subscriber", "self": 1, "pos": "left", "value": [28954, 48669], "sample": 77623, "color": "#ff7f0e", "children": [{"name": "tripduration <= 840", "parent": 1, "predict": "Subscriber", "self": 3, "pos": "left", "value": [5317, 22659], "sample": 27976, "color": "#ff7f0e", "children": [{"name": "tripduration <= 565", "parent": 3, "predict": "Subscriber", "self": 25, "pos": "left", "value": [2081, 13307], "sample": 15388, "color": "#ff7f0e", "children": [{"name": "average_speed <= 4.577", "parent": 25, "predict": "Subscriber", "self": 39, "pos": "left", "value": [933, 3237], "sample": 4170, "color": "#ff7f0e", "impurity": 0.347}, {"name": "average_speed > 4.577", "parent": 25, "predict": "Subscriber", "self": 40, "pos": "right", "value": [1148, 10070], "sample": 11218, "color": "#ff7f0e", "impurity": 0.184}], "impurity": 0.234}, {"name": "tripduration > 565", "parent": 3, "predict": "Subscriber", "self": 26, "pos": "right", "value": [3236, 9352], "sample": 12588, "color": "#ff7f0e", "children": [{"name": "is_weekend_False: 0", "parent": 26, "predict": "Subscriber", "self": 35, "pos": "left", "value": [1387, 2424], "sample": 3811, "color": "#ff7f0e", "impurity": 0.463}, {"name": "is_weekend_False: 1", "parent": 26, "predict": "Subscriber", "self": 36, "pos": "right", "value": [1849, 6928], "sample": 8777, "color": "#ff7f0e", "impurity": 0.333}], "impurity": 0.382}], "impurity": 0.308}, {"name": "tripduration > 840", "parent": 1, "predict": "Subscriber", "self": 4, "pos": "right", "value": [23637, 26010], "sample": 49647, "color": "#ff7f0e", "children": [{"name": "start station latitude <= 40.76", "parent": 4, "predict": "Subscriber", "self": 11, "pos": "left", "value": [16035, 21089], "sample": 37124, "color": "#ff7f0e", "children": [{"name": "is_weekend_False: 0", "parent": 11, "predict": "Customer", "self": 15, "pos": "left", "value": [7311, 6475], "sample": 13786, "color": "#aec7e8", "impurity": 0.498}, {"name": "is_weekend_False: 1", "parent": 11, "predict": "Subscriber", "self": 16, "pos": "right", "value": [8724, 14614], "sample": 23338, "color": "#ff7f0e", "children": [{"name": "end station latitude <= 40.713", "parent": 16, "predict": "Subscriber", "self": 21, "pos": "left", "value": [3321, 3522], "sample": 6843, "color": "#ff7f0e", "children": [{"name": "end station latitude <= 40.695", "parent": 21, "predict": "Subscriber", "self": 23, "pos": "left", "value": [704, 1614], "sample": 2318, "color": "#ff7f0e", "impurity": 0.423}, {"name": "end station latitude > 40.695", "parent": 21, "predict": "Customer", "self": 24, "pos": "right", "value": [2617, 1908], "sample": 4525, "color": "#aec7e8", "impurity": 0.488}], "impurity": 0.5}, {"name": "end station latitude > 40.713", "parent": 16, "predict": "Subscriber", "self": 22, "pos": "right", "value": [5403, 11092], "sample": 16495, "color": "#ff7f0e", "children": [{"name": "tripduration <= 1146", "parent": 22, "predict": "Subscriber", "self": 47, "pos": "left", "value": [1231, 3612], "sample": 4843, "color": "#ff7f0e", "impurity": 0.379}, {"name": "tripduration > 1146", "parent": 22, "predict": "Subscriber", "self": 48, "pos": "right", "value": [4172, 7480], "sample": 11652, "color": "#ff7f0e", "impurity": 0.46}], "impurity": 0.441}], "impurity": 0.468}], "impurity": 0.491}, {"name": "start station latitude > 40.76", "parent": 4, "predict": "Customer", "self": 12, "pos": "right", "value": [7602, 4921], "sample": 12523, "color": "#aec7e8", "children": [{"name": "start_moment_evening: 0", "parent": 12, "predict": "Customer", "self": 37, "pos": "left", "value": [6847, 3958], "sample": 10805, "color": "#aec7e8", "children": [{"name": "end station longitude <= -73.955", "parent": 37, "predict": "Customer", "self": 41, "pos": "left", "value": [6520, 3491], "sample": 10011, "color": "#aec7e8", "children": [{"name": "end station longitude <= -73.977", "parent": 41, "predict": "Customer", "self": 43, "pos": "left", "value": [2231, 1765], "sample": 3996, "color": "#aec7e8", "impurity": 0.493}, {"name": "end station longitude > -73.977", "parent": 41, "predict": "Customer", "self": 44, "pos": "right", "value": [4289, 1726], "sample": 6015, "color": "#aec7e8", "children": [{"name": "end station latitude <= 40.765", "parent": 44, "predict": "Customer", "self": 45, "pos": "left", "value": [493, 451], "sample": 944, "color": "#aec7e8", "impurity": 0.499}, {"name": "end station latitude > 40.765", "parent": 44, "predict": "Customer", "self": 46, "pos": "right", "value": [3796, 1275], "sample": 5071, "color": "#aec7e8", "impurity": 0.376}], "impurity": 0.409}], "impurity": 0.454}, {"name": "end station longitude > -73.955", "parent": 37, "predict": "Subscriber", "self": 42, "pos": "right", "value": [327, 467], "sample": 794, "color": "#ff7f0e", "impurity": 0.484}], "impurity": 0.464}, {"name": "start_moment_evening: 1", "parent": 12, "predict": "Subscriber", "self": 38, "pos": "right", "value": [755, 963], "sample": 1718, "color": "#ff7f0e", "impurity": 0.493}], "impurity": 0.477}], "impurity": 0.499}], "impurity": 0.468}, {"name": "average_speed > 6.192", "parent": 0, "predict": "Subscriber", "self": 2, "pos": "right", "value": [29194, 375127], "sample": 404321, "color": "#ff7f0e", "children": [{"name": "tripduration <= 1018", "parent": 2, "predict": "Subscriber", "self": 5, "pos": "left", "value": [12689, 291551], "sample": 304240, "color": "#ff7f0e", "children": [{"name": "is_circle_trip_False: 0", "parent": 5, "predict": "Subscriber", "self": 13, "pos": "left", "value": [1381, 3795], "sample": 5176, "color": "#ff7f0e", "impurity": 0.391}, {"name": "is_circle_trip_False: 1", "parent": 5, "predict": "Subscriber", "self": 14, "pos": "right", "value": [11308, 287756], "sample": 299064, "color": "#ff7f0e", "children": [{"name": "average_speed <= 8.292", "parent": 14, "predict": "Subscriber", "self": 17, "pos": "left", "value": [5485, 69962], "sample": 75447, "color": "#ff7f0e", "children": [{"name": "tripduration <= 614", "parent": 17, "predict": "Subscriber", "self": 27, "pos": "left", "value": [2234, 45761], "sample": 47995, "color": "#ff7f0e", "impurity": 0.089}, {"name": "tripduration > 614", "parent": 17, "predict": "Subscriber", "self": 28, "pos": "right", "value": [3251, 24201], "sample": 27452, "color": "#ff7f0e", "children": [{"name": "is_weekend_False: 0", "parent": 28, "predict": "Subscriber", "self": 29, "pos": "left", "value": [1364, 4989], "sample": 6353, "color": "#ff7f0e", "impurity": 0.337}, {"name": "is_weekend_False: 1", "parent": 28, "predict": "Subscriber", "self": 30, "pos": "right", "value": [1887, 19212], "sample": 21099, "color": "#ff7f0e", "impurity": 0.163}], "impurity": 0.209}], "impurity": 0.135}, {"name": "average_speed > 8.292", "parent": 14, "predict": "Subscriber", "self": 18, "pos": "right", "value": [5823, 217794], "sample": 223617, "color": "#ff7f0e", "impurity": 0.051}], "impurity": 0.073}], "impurity": 0.08}, {"name": "tripduration > 1018", "parent": 2, "predict": "Subscriber", "self": 6, "pos": "right", "value": [16505, 83576], "sample": 100081, "color": "#ff7f0e", "children": [{"name": "average_speed <= 9.263", "parent": 6, "predict": "Subscriber", "self": 7, "pos": "left", "value": [12300, 37716], "sample": 50016, "color": "#ff7f0e", "children": [{"name": "is_weekend_False: 0", "parent": 7, "predict": "Subscriber", "self": 9, "pos": "left", "value": [5676, 9120], "sample": 14796, "color": "#ff7f0e", "impurity": 0.473}, {"name": "is_weekend_False: 1", "parent": 7, "predict": "Subscriber", "self": 10, "pos": "right", "value": [6624, 28596], "sample": 35220, "color": "#ff7f0e", "children": [{"name": "traveled_distance <= 1.868", "parent": 10, "predict": "Subscriber", "self": 31, "pos": "left", "value": [1089, 2212], "sample": 3301, "color": "#ff7f0e", "impurity": 0.442}, {"name": "traveled_distance > 1.868", "parent": 10, "predict": "Subscriber", "self": 32, "pos": "right", "value": [5535, 26384], "sample": 31919, "color": "#ff7f0e", "children": [{"name": "average_speed <= 7.538", "parent": 32, "predict": "Subscriber", "self": 33, "pos": "left", "value": [2861, 9089], "sample": 11950, "color": "#ff7f0e", "impurity": 0.364}, {"name": "average_speed > 7.538", "parent": 32, "predict": "Subscriber", "self": 34, "pos": "right", "value": [2674, 17295], "sample": 19969, "color": "#ff7f0e", "impurity": 0.232}], "impurity": 0.287}], "impurity": 0.305}], "impurity": 0.371}, {"name": "average_speed > 9.263", "parent": 6, "predict": "Subscriber", "self": 8, "pos": "right", "value": [4205, 45860], "sample": 50065, "color": "#ff7f0e", "children": [{"name": "is_weekend_False: 0", "parent": 8, "predict": "Subscriber", "self": 19, "pos": "left", "value": [1731, 7518], "sample": 9249, "color": "#ff7f0e", "impurity": 0.304}, {"name": "is_weekend_False: 1", "parent": 8, "predict": "Subscriber", "self": 20, "pos": "right", "value": [2474, 38342], "sample": 40816, "color": "#ff7f0e", "impurity": 0.114}], "impurity": 0.154}], "impurity": 0.275}], "impurity": 0.134}], "impurity": 0.212};
+var width = 1500, height = 1000;
+var n_classes = 2;
+
+// calculate tree gap
+var tree_gap = (width - margin['left'] - margin['right']) * 1.0 / tree_depth;
+
+// generate tree layout (horizonal)
+var tree = d3.layout.tree().size([height, width]);
+var diagonal = d3.svg.diagonal()
+        .projection(function(d){
+			return [d.y, d.x];
+		});
+
+var svg = d3.select('body').append('svg')
+		.attr('width', width + margin.right + margin.left)
+		.attr('height', height + margin.top + margin.bottom)
+		.append('g')
+		.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+// color scale based on node impurity
+var node_color_scale = d3.scale.linear()
+    .domain([1.0 / n_classes + 0.1, 0.])
+    .clamp(true);
+
+var i = 0, duration = 750;
+root.x0 = height / 2;
+root.y0 = 0;
+
+// update tree
+update(root);
+
+
+function update(source) {
+
+    // compute the tree layout
+    var nodes = tree.nodes(root).reverse(),
+    links = tree.links(nodes);
+
+    // normalize for fixed-depth
+    nodes.forEach(function(d) {
+    	d.y = d.depth * tree_gap;
+    });
+
+    // draw the nodes
+    var node = svg.selectAll('g.node')
+    		.data(nodes, function(d) {
+    			return d.id || (d.id = ++i);
+    		});
+
+    // enter any new nodes at the parent's previous position
+    var nodeEnter = node.enter().append('g')
+    		.attr('class', 'node')
+    		.on('click', click)
+    		.attr('transform', function(d) {
+    			return 'translate(' + source.y0 + ',' + source.x0 + ')';
+    		})
+    		.on('click', click)
+    		.on('mouseover', mouseover)
+    		.on('mouseout', mouseout);
+
+    // draw tree nodes
+    nodeEnter.append('circle')
+    		.attr('r', 1e-6)
+    		.style('fill', function(d) {
+                // d.color is the target color
+    			node_color_scale.range(['#fff', d.color]);
+    			return node_color_scale(d.impurity);
+    		})
+    		.style('stroke', function(d) {
+    			return d.color;
+    		})
+    		.on('mouseover', function(d) {
+    			if(!d.children) {
+    				d3.select(this).style('fill', function(d){
+    					return d.color;
+    				});
+    				recurse(d, d.color);
+    			}
+    		})
+            // when mouseout, recover everything
+    		.on('mouseout', function(d) {
+    			d3.select(this).style('fill', function(d) {
+    				node_color_scale.range(['#fff', d.color]);
+    				return node_color_scale(d.impurity);
+    			}).attr('r', function(d){
+                    // when the node is collapesd, increase the size
+                    return d._children? 20 : 10;
+                });
+    			d3.selectAll('.link')
+                    .style('stroke-width', '2')
+                    .style('stroke', '#ccc');
+    		});
+
+    // add text on tree nodes
+    var text = nodeEnter.append('text')
+    		.attr('x', 13)
+    		.attr('dy', '-0.5em');
+
+    text.append('tspan')
+    		.style('font-weight', 'bold')
+    		.text(function(d) {
+                return d.name;
+    		});
+
+    text.append('tspan')
+    		.attr('x', 13)
+    		.attr('y', 8)
+    		.text(function(d) {
+    			return 'Values: [' + d.value + ']';
+    		});
+
+    text.append('tspan')
+    		.attr('x', 13)
+    		.attr('y', 22)
+    		.text(function(d) {
+    			return 'Predict: ' + d.predict;
+    		});
+
+    nodeEnter.select('text').style('fill-opacity', 0);
+
+    // transform tree nodes to their initial positions
+    var nodeUpdate = node.transition()
+    		.duration(duration)
+    		.attr('transform', function(d) {
+    			return 'translate(' + d.y + ',' + d.x + ')';
+    		});
+
+    nodeUpdate.select('circle')
+    		.attr('r', function(d){
+    			return d._children? 20 : 10;
+    		})
+    		.style('stroke', function(d) {
+    			return d.color;
+    		})
+    		.style('fill', function(d) {
+    			node_color_scale.range(['#fff', d.color]);
+    			return node_color_scale(d.impurity);
+    		});
+
+    nodeUpdate.select('text').style('fill-opacity', 1);
+
+    // transition exiting nodes to the parent's new position
+    var nodeExit = node.exit().transition()
+    		.duration(duration)
+    		.attr('transform', function(d) {
+    			return 'translate(' + source.y + ',' + source.x + ')';
+    		})
+    		.remove();
+
+    // hide nodes and texts
+    nodeExit.select('circle').attr('r', 1e-6);
+    nodeExit.select('text').style('fill-opacity', 0);
+
+    // draw the links
+    var link = svg.selectAll('path.link')
+    		.data(links, function(d) {
+    			return d.target.id;
+    		});
+
+    // enter any new links at the parent's previous position
+    link.enter().insert('path', 'g')
+    		.attr('class', 'link')
+    		.attr('d', function(d) {
+    			var o = {x: source.x0, y : source.y0};
+    			return diagonal({source:o, target: o});
+    		});
+
+    // transition links to their new position
+    link.transition()
+    		.duration(duration)
+    		.attr('d', diagonal);
+
+    // transition the existing links to the parent's new position
+    link.exit().transition()
+    		.duration(duration)
+    		.attr('d', function(d) {
+    			var o = {x: source.x, y: source.y};
+    			return diagonal({source: o, target: o});
+    		}).remove();
+
+    // stash the old positions for transition
+    nodes.forEach(function(d) {
+    	d.x0 = d.x;
+    	d.y0 = d.y;
+    });
+}
+
+// recursively color the links when hovering on a tree node
+function recurse(d, color) {
+	d3.selectAll('.link').each(function(l) {
+		if(l.target === d) {
+			d3.select(this).style('stroke-width', 4).style('stroke', color);
+		}
+	});
+	if(d.parent) {
+		recurse(d.parent, color);
+	}
+}
+
+function mouseover(d) {
+    // if this node has no children nodes
+	if(!d.children) {
+		var rule = rules[d.self];
+		var append = ['Predict: ' + d.predict, 'Impurity: ' + d.impurity, ''];
+		rule = append.concat(rule);
+
+		var len = rule.length;
+		var info = d3.select(this).append('g').attr('class', 'hover');
+		var y0 = 35;
+		var rules_text = info.append('g').append('text').attr('y', y0);
+
+		for(var i = 1; i <= len; i++) {
+			rules_text.append('tspan')
+					.attr('x', 0)
+					.attr('y', y0 + i * 15)
+					.attr('text-anchor', 'left')
+					.style('font-weight', function(){
+						if(i <= 3) {
+							return 'bold';
+						}else{
+							return null;
+						}
+					})
+					.style('fill', function(){
+						if(i <= 3) {
+							return '#000';
+						}else{
+							return d.color;
+						}
+					})
+					.text(function() {
+						return rule[i - 1];
+					});
+		}
+
+        // draw the box
+		var bbox = info.node().getBBox();
+		var padding = 10;
+		var rect = d3.select(this).insert('rect', 'g')
+				.attr('class', 'info_bg')
+				.attr('x', bbox.x - padding)
+				.attr('y', bbox.y - padding)
+				.attr('width', bbox.width + padding * 2)
+				.attr('height', bbox.height + padding * 2)
+				.style('fill', 'white')
+				.style('stroke', d.color)
+				.style('stroke-width', 2);
+
+		// make the rule infomation on the first layer
+		this.parentNode.appendChild(this);		
+	}
+}
+
+function mouseout(d) {
+	d3.select('.hover').remove();
+	d3.select('.info_bg').remove();
+}
+
+function click(d) {
+	if(d.children) {
+		d._children = d.children;
+		d.children = null;
+	}else {
+		d.children = d._children;
+		d._children = null;
+	}
+	update(d);
+}
+
+</script>
+</body>
+</html>
